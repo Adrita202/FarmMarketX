@@ -24,6 +24,31 @@ exports.sendOtp = (req, res) => {
     res.status(200).json({ message: "OTP sent successfully." });
   });
 };
+// 5. Verify OTP (new API)
+exports.verifyOtp = (req, res) => {
+  const { ph_no, otp } = req.body;
+
+  if (!ph_no || !otp) {
+    return res.status(400).json({ message: "Phone number and OTP are required." });
+  }
+
+  // Check if OTP matches the one in the database
+  User.getOTP(ph_no, (err, result) => {
+    if (err) {
+      console.error('Error fetching OTP:', err);
+      return res.status(500).json({ message: "Server error while verifying OTP." });
+    }
+    if (!result || result.expired || result.otp_code !== Number(otp)) {
+      return res.status(401).json({ message: "Invalid or expired OTP." });
+    }
+
+    // Optionally, you can delete OTP after successful verification to avoid reuse
+    User.deleteOTP(ph_no, () => {});
+
+    return res.status(200).json({ message: "OTP verified successfully." });
+  });
+};
+
 
 // 2. Register Farmer
 exports.registerFarmer = (req, res) => {
