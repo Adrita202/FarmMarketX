@@ -16,4 +16,5 @@ router.post("/send-otp", authController.sendOtp);
 
 router.post("/verify-otp", authController.verifyOtp);
 
+router.get("/get-user-role", authController.getUserRole);
 module.exports = router;

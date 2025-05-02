@@ -193,7 +193,94 @@ exports.login = (req, res) => {
     });
   });
 };
+// Add this function to your authController.js file
+exports.getUserRole = (req, res) => {
+  const { ph_no} = req.query; // Get phone from query parameter
+  
+  // Log the request for debugging
+  console.log(`Getting user role for phone: ${ph_no}`);
+  
+  if (!ph_no) {
+    return res.status(400).json({
+      success: false,
+      message: "Phone number is required"
+    });
+  }
 
+  // Get user by phone number to determine their role
+  // Using the same method as in your login function
+  User.getUserByPhone(ph_no, (err, user) => {
+    if (err) {
+      console.error('DB error fetching user:', err);
+      return res.status(500).json({ 
+        success: false,
+        message: "DB error." 
+      });
+    }
+    
+    if (!user || user.length === 0) {
+      return res.status(404).json({ 
+        success: false,
+        message: "User not registered." 
+      });
+    }
+
+    const userRole = user[0].role;
+    const userId = user[0].id;
+
+    // Return basic user info with role
+    const userData = {
+      id: userId,
+      phone: ph_no,
+      role: userRole,
+      // Add any other basic user fields you need
+    };
+
+    // If you need additional details based on role, similar to your login function:
+    if (userRole === 'farmer') {
+      User.getFarmerDetails(userId, (err, farmer) => {
+        if (err) {
+          console.error('Error fetching farmer details:', err);
+          return res.status(500).json({ 
+            success: false,
+            message: "Error fetching farmer details." 
+          });
+        }
+        
+        // Return farmer details with success
+        return res.status(200).json({
+          success: true,
+          role: userRole,
+          user: farmer[0] || userData
+        });
+      });
+    } else if (userRole === 'wholesaler') {
+      User.getWholesalerDetails(userId, (err, wholesaler) => {
+        if (err) {
+          console.error('Error fetching wholesaler details:', err);
+          return res.status(500).json({ 
+            success: false,
+            message: "Error fetching wholesaler details." 
+          });
+        }
+        
+        // Return wholesaler details with success
+        return res.status(200).json({
+          success: true,
+          role: userRole,
+          user: wholesaler[0] || userData
+        });
+      });
+    } else {
+      // Unknown role, return basic user data
+      return res.status(200).json({
+        success: true,
+        role: userRole,
+        user: userData
+      });
+    }
+  });
+};
 
 
 
